@@ -94,6 +94,7 @@
 #define ITEM_suffix(item) ((char*) &((item)->data) + (item)->nkey + 1 \
          + (((item)->it_flags & ITEM_CAS) ? sizeof(uint64_t) : 0))
 
+
 #define ITEM_data(item) ((char*) &((item)->data) + (item)->nkey + 1 \
          + (item)->nsuffix \
          + (((item)->it_flags & ITEM_CAS) ? sizeof(uint64_t) : 0))
@@ -387,6 +388,8 @@ struct conn {
     char   *rcurr;  /** but if we parsed some already, this is where we stopped */
     int    rsize;   /** total allocated size of rbuf */
     int    rbytes;  /** how much data, starting from rcur, do we have unparsed */
+    int    rid; /**Request id for this request**/
+    char *allocatedMemory;
 
     char   *wbuf;
     char   *wcurr;

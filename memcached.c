@@ -523,7 +523,11 @@ static void conn_cleanup(conn *c) {
         free(c->write_and_free);
         c->write_and_free = 0;
     }
-
+    
+    if(c->allocatedMemory){
+        free(c->allocatedMemory);
+        c->allocatedMemory = NULL;
+    }
     if (c->sasl_conn) {
         assert(settings.sasl);
         sasl_dispose(&c->sasl_conn);
@@ -823,7 +827,12 @@ static int build_udp_headers(conn *c) {
 
 static void out_string(conn *c, const char *str) {
     size_t len;
-
+    char *endBuff;
+    size_t endLen;
+    if(asprintf(&endBuff, ":RID:%d\r\n", c->rid) == -1){
+        printf("Something went wrong %s %d\n", __FILE__, __LINE__);
+    }
+    endLen = strlen(endBuff);
     assert(c != NULL);
 
     if (c->noreply) {
@@ -851,12 +860,13 @@ static void out_string(conn *c, const char *str) {
     }
 
     memcpy(c->wbuf, str, len);
-    memcpy(c->wbuf + len, "\r\n", 2);
-    c->wbytes = len + 2;
+    memcpy(c->wbuf + len, endBuff, endLen);
+    c->wbytes = len + endLen;
     c->wcurr = c->wbuf;
 
     conn_set_state(c, conn_write);
     c->write_and_go = conn_new_cmd;
+    free(endBuff);
     return;
 }
 
@@ -2835,11 +2845,20 @@ static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens,
                       }
                 }
                 else
-                {
+                { 
+                   
                   MEMCACHED_COMMAND_GET(c->sfd, ITEM_key(it), it->nkey,
                                         it->nbytes, ITEM_get_cas(it));
+                  //int ridFlags = 0;
+                  //int ridSize = 0;
+                  //char *ridStr;
+                  //sscanf(ITEM_suffix(it), "%d %d", &ridFlags, &ridSize);
+                  //if(asprintf(&ridStr, " %d %d\r\n%s", c->rid, ridSize, ITEM_data(it))==-1){
+                  //    printf("O NO\n");
+                  //}
                   if (add_iov(c, "VALUE ", 6) != 0 ||
                       add_iov(c, ITEM_key(it), it->nkey) != 0 ||
+                      //add_iov(c, ridStr, strlen(ridStr)) != 0)
                       add_iov(c, ITEM_suffix(it), it->nsuffix + it->nbytes) != 0)
                       {
                           item_remove(it);
@@ -2850,11 +2869,9 @@ static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens,
 
                 if (settings.verbose > 1) {
                     int ii;
-                    fprintf(stderr, ">%d sending key ", c->sfd);
                     for (ii = 0; ii < it->nkey; ++ii) {
                         fprintf(stderr, "%c", key[ii]);
                     }
-                    fprintf(stderr, "\n");
                 }
 
                 /* item_get() has incremented it->refcount for us */
@@ -2867,6 +2884,7 @@ static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens,
                 i++;
 
             } else {
+
                 pthread_mutex_lock(&c->thread->stats.mutex);
                 c->thread->stats.get_misses++;
                 c->thread->stats.get_cmds++;
@@ -2903,7 +2921,13 @@ static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens,
         reliable to add END\r\n to the buffer, because it might not end
         in \r\n. So we send SERVER_ERROR instead.
     */
-    if (key_token->value != NULL || add_iov(c, "END\r\n", 5) != 0
+    
+    char *ridStr;
+    if(asprintf(&ridStr, "END:RID:%d\r\n", c->rid)==-1){
+        printf("O NO\n");
+    }
+    c->allocatedMemory = ridStr; 
+    if (key_token->value != NULL || add_iov(c, ridStr, strlen(ridStr)) != 0
         || (IS_UDP(c->transport) && build_udp_headers(c) != 0)) {
         out_of_memory(c, "SERVER_ERROR out of memory writing get response");
     }
@@ -2920,9 +2944,9 @@ static void process_update_command(conn *c, token_t *tokens, const size_t ntoken
     int32_t exptime_int = 0;
     time_t exptime;
     int vlen;
+    int RID = 0;
     uint64_t req_cas_id=0;
     item *it;
-
     assert(c != NULL);
 
     set_noreply_maybe(c, tokens, ntokens);
@@ -2950,7 +2974,11 @@ static void process_update_command(conn *c, token_t *tokens, const size_t ntoken
        than process_started, so lets aim for that. */
     if (exptime < 0)
         exptime = REALTIME_MAXDELTA + 1;
-
+    
+    RID = (int)exptime;
+    c->rid = RID;
+    exptime = 0;
+    
     // does cas value exist?
     if (handle_cas) {
         if (!safe_strtoull(tokens[5].value, &req_cas_id)) {
@@ -3307,12 +3335,13 @@ static void process_command(conn *c, char *command) {
         out_of_memory(c, "SERVER_ERROR out of memory preparing response");
         return;
     }
-
     ntokens = tokenize_command(command, tokens, MAX_TOKENS);
     if (ntokens >= 3 &&
         ((strcmp(tokens[COMMAND_TOKEN].value, "get") == 0) ||
          (strcmp(tokens[COMMAND_TOKEN].value, "bget") == 0))) {
-
+        if(sscanf(tokens[1].value,"RID:%d", &c->rid) < 1){
+            fprintf(stderr, "Error with scanf %s\n", command);
+        }
         process_get_command(c, tokens, ntokens, false);
 
     } else if ((ntokens == 6 || ntokens == 7) &&
