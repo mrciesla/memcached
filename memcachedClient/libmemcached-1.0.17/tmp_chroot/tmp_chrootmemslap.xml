@@ -1,0 +1,22 @@
+<testsuites name="memslap">
+	<testsuite name="memslap"  classname="" package="">
+		<testcase name="--quiet" time="87">
+		</testcase>
+		<testcase name="--help" time="48">
+		</testcase>
+		<testcase name="--server_test" time="854">
+		</testcase>
+		<testcase name="--concurrency=10" time="1957">
+		</testcase>
+		<testcase name="--initial-load=1000" time="1876">
+		</testcase>
+		<testcase name="--execute-number=10" time="118">
+		</testcase>
+		<testcase name="--test=get" time="207">
+		</testcase>
+		<testcase name="--test=set" time="133">
+		</testcase>
+		<testcase name="--test=set --non-blockin" time="122">
+		</testcase>
+	</testsuite>
+</testsuites>
