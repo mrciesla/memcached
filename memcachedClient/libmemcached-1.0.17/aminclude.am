@@ -1,5 +1,9 @@
 
 # generated automatically by configure from AX_AUTOMAKE_MACROS
+<<<<<<< HEAD
 # on Sun Mar 23 18:42:09 EDT 2014
+=======
+# on Tue Mar 18 14:05:21 EDT 2014
+>>>>>>> 571418192ebf9037852e73511b4058bacdd8410f
 
 AM_MAKEFLAGS += -j5 

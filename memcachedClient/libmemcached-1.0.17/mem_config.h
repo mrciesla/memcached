@@ -438,10 +438,10 @@
 #define LT_OBJDIR ".libs/"
 
 /* Name of the memcached binary used in make test */
-#define MEMCACHED_BINARY "/usr/bin/memcached"
+#define MEMCACHED_BINARY "/usr/local/bin/memcached"
 
 /* Memcached binary version */
-#define MEMCACHED_VERSION "1.4.13"
+#define MEMCACHED_VERSION "1.4.17"
 
 /* Name of the mysqld binary used in make test */
 #define MYSQLD_BINARY "/usr/sbin/mysqld"
