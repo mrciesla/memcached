@@ -78,6 +78,7 @@ unsigned int execute_set(memcached_st *memc, pairs_st *pairs, unsigned int numbe
 
   return pairs_sent;
 }
+
 /*
   Execute a mix of operations on a set of pairs.
   Return the number of rows retrieved.
@@ -206,14 +207,18 @@ void postProcess(map<long, long> *done){
 }
 
 
-unsigned int execute_mix(memcached_st *memc, pairs_st *pairs, unsigned int number_of, unsigned int num_ops, unsigned int write_percentage)
+unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int number_of, unsigned int num_ops, unsigned int write_percentage)
 {
   unsigned int x;
   unsigned int retrieved =0;
   unsigned int pairs_sent =0;
 
   unsigned int size_of_pairs = number_of;
-
+  
+  //reset_stats( memr, NULL, 0);
+  //After a reset the connection is bonkers so basically create a new one
+  memcached_st *memc= memcached_clone(NULL, memr);
+ 
   inFlightG = new map<unsigned int, timeval>();
   doneG = new map<long, long>();
 
@@ -245,6 +250,12 @@ unsigned int execute_mix(memcached_st *memc, pairs_st *pairs, unsigned int numbe
   if(myPairs){
       free_old(pairs);
   }
+
+  memcached_stat_st *memc_stat= memcached_stat(memc, NULL, NULL);
+  printf("Get %s\n", memcached_stat_get_value(memc, memc_stat,"cmd_get", NULL));
+  printf("Set %s\n", memcached_stat_get_value(memc, memc_stat,"cmd_set", NULL));
+
+  memcached_free(memc);
   return retrieved;
 }
 

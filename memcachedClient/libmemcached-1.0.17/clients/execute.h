@@ -36,7 +36,7 @@ extern "C" {
 
 unsigned int execute_set(memcached_st *memc, pairs_st *pairs, unsigned int number_of);
 unsigned int execute_get(memcached_st *memc, pairs_st *pairs, unsigned int number_of);
-unsigned int execute_mget(memcached_st *memc, const char * const *keys, size_t *key_length,
+unsigned int execute_mget(memcached_st *memr, const char * const *keys, size_t *key_length,
                           unsigned int number_of);
 unsigned int execute_mix(memcached_st *memc, pairs_st *pairs, unsigned int number_of,
         unsigned int num_ops, unsigned int write_percentage);

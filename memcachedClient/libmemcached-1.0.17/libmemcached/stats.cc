@@ -81,6 +81,9 @@ struct local_context
 };
 
 
+
+
+
 static memcached_return_t set_data(memcached_stat_st *memc_stat, const char *key, const char *value)
 {
 
@@ -474,6 +477,25 @@ char *memcached_stat_get_value(const memcached_st *, memcached_stat_st *memc_sta
   return ret;
 }
 
+memcached_return_t reset_stats(memcached_st* memc,
+                                            const char *args,
+                                            const size_t args_length)
+{
+  libmemcached_io_vector_st vector[]=
+  {
+    { memcached_literal_param("stats reset") },
+    { args, args_length },
+    { memcached_literal_param("\r\n") }
+  };
+  
+  Memcached* self= memcached2Memcached(memc);
+  memcached_instance_st* instance= memcached_instance_fetch(self, 0);
+  memcached_stat_st *memc_stat= memcached_stat(memc, NULL, NULL);
+  
+  memcached_return_t rc= memcached_vdo(instance, vector, 3, true);
+  printf("ret is: %d\n", rc);
+  return rc;
+}
 static memcached_return_t binary_stats_fetch(memcached_stat_st *memc_stat,
                                              const char *args,
                                              const size_t args_length,

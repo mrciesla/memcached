@@ -190,7 +190,39 @@ tests/libmemcached-1.0/generate.o: tests/libmemcached-1.0/generate.cc \
  libmemcached/is.h tests/libmemcached-1.0/generate.h \
  tests/libmemcached-1.0/fetch_all_results.h \
  tests/libmemcached-1.0/callback_counter.h clients/generator.h \
- clients/execute.h
+ clients/execute.h libmemcached/common.h /usr/include/c++/4.6/climits \
+ /usr/lib/gcc/x86_64-linux-gnu/4.6/include-fixed/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.6/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/local_lim.h \
+ /usr/include/linux/limits.h \
+ /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/xopen_lim.h /usr/include/fcntl.h \
+ /usr/include/x86_64-linux-gnu/bits/fcntl.h \
+ /usr/include/x86_64-linux-gnu/bits/stat.h \
+ /usr/include/x86_64-linux-gnu/bits/fcntl2.h /usr/include/strings.h \
+ /usr/include/dlfcn.h /usr/include/x86_64-linux-gnu/bits/dlfcn.h \
+ libmemcached/watchpoint.h /usr/include/poll.h \
+ /usr/include/x86_64-linux-gnu/sys/poll.h \
+ /usr/include/x86_64-linux-gnu/bits/poll.h libmemcached/error.hpp \
+ libmemcached/memory.h libmemcached/io.h libmemcached/string.hpp \
+ libmemcached/memcached/protocol_binary.h \
+ libmemcachedprotocol-0.0/vbucket.h libmemcached/io.hpp \
+ libmemcached/udp.hpp libmemcached/do.hpp libmemcached/socket.hpp \
+ libmemcached/connect.hpp libmemcached/allocators.hpp \
+ libmemcached/hash.hpp libmemcached/quit.hpp libmemcached/instance.hpp \
+ libmemcached/server_instance.h libmemcached/server.hpp \
+ libmemcached/flag.hpp libmemcached/behavior.hpp libmemcached/sasl.hpp \
+ libmemcached/server_list.hpp libmemcached/internal.h \
+ libmemcached/array.h libmemcached/libmemcached_probes.h \
+ libmemcached/byteorder.h libmemcached/initialize_query.h \
+ libmemcached/response.h libmemcached/namespace.h \
+ libmemcached/backtrace.hpp libmemcached/assert.hpp libmemcached/key.hpp \
+ libmemcached/encoding_key.h libmemcached/result.h \
+ libmemcached/version.hpp libmemcached/continuum.hpp \
+ /usr/include/c++/4.6/map /usr/include/c++/4.6/bits/stl_tree.h \
+ /usr/include/c++/4.6/bits/stl_map.h \
+ /usr/include/c++/4.6/bits/stl_multimap.h
 
 mem_config.h:
 
@@ -825,3 +857,123 @@ tests/libmemcached-1.0/callback_counter.h:
 clients/generator.h:
 
 clients/execute.h:
+
+libmemcached/common.h:
+
+/usr/include/c++/4.6/climits:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.6/include-fixed/limits.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.6/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/local_lim.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
+
+/usr/include/fcntl.h:
+
+/usr/include/x86_64-linux-gnu/bits/fcntl.h:
+
+/usr/include/x86_64-linux-gnu/bits/stat.h:
+
+/usr/include/x86_64-linux-gnu/bits/fcntl2.h:
+
+/usr/include/strings.h:
+
+/usr/include/dlfcn.h:
+
+/usr/include/x86_64-linux-gnu/bits/dlfcn.h:
+
+libmemcached/watchpoint.h:
+
+/usr/include/poll.h:
+
+/usr/include/x86_64-linux-gnu/sys/poll.h:
+
+/usr/include/x86_64-linux-gnu/bits/poll.h:
+
+libmemcached/error.hpp:
+
+libmemcached/memory.h:
+
+libmemcached/io.h:
+
+libmemcached/string.hpp:
+
+libmemcached/memcached/protocol_binary.h:
+
+libmemcachedprotocol-0.0/vbucket.h:
+
+libmemcached/io.hpp:
+
+libmemcached/udp.hpp:
+
+libmemcached/do.hpp:
+
+libmemcached/socket.hpp:
+
+libmemcached/connect.hpp:
+
+libmemcached/allocators.hpp:
+
+libmemcached/hash.hpp:
+
+libmemcached/quit.hpp:
+
+libmemcached/instance.hpp:
+
+libmemcached/server_instance.h:
+
+libmemcached/server.hpp:
+
+libmemcached/flag.hpp:
+
+libmemcached/behavior.hpp:
+
+libmemcached/sasl.hpp:
+
+libmemcached/server_list.hpp:
+
+libmemcached/internal.h:
+
+libmemcached/array.h:
+
+libmemcached/libmemcached_probes.h:
+
+libmemcached/byteorder.h:
+
+libmemcached/initialize_query.h:
+
+libmemcached/response.h:
+
+libmemcached/namespace.h:
+
+libmemcached/backtrace.hpp:
+
+libmemcached/assert.hpp:
+
+libmemcached/key.hpp:
+
+libmemcached/encoding_key.h:
+
+libmemcached/result.h:
+
+libmemcached/version.hpp:
+
+libmemcached/continuum.hpp:
+
+/usr/include/c++/4.6/map:
+
+/usr/include/c++/4.6/bits/stl_tree.h:
+
+/usr/include/c++/4.6/bits/stl_map.h:
+
+/usr/include/c++/4.6/bits/stl_multimap.h:
