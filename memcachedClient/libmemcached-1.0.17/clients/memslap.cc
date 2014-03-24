@@ -56,6 +56,7 @@
 #include <iostream>
 
 #include <libmemcached-1.0/memcached.h>
+#include <libmemcached/common.h>
 
 #include "client_options.h"
 #include "utilities.h"
@@ -78,13 +79,15 @@ pthread_cond_t sleep_threshhold;
 enum test_t {
   SET_TEST,
   GET_TEST,
-  MGET_TEST
+  MGET_TEST,
+  MIX_TEST
 };
 
 struct thread_context_st {
   unsigned int key_count;
   pairs_st *initial_pairs;
   unsigned int initial_number;
+  unsigned int write_percentage;
   pairs_st *execute_pairs;
   unsigned int execute_number;
   char **keys;
@@ -97,6 +100,7 @@ struct thread_context_st {
     key_count(0),
     initial_pairs(NULL),
     initial_number(0),
+    write_percentage(10),
     execute_pairs(NULL),
     execute_number(0),
     keys(0),
@@ -184,6 +188,10 @@ static __attribute__((noreturn)) void *run_task(void *p)
     execute_get(context->memc, context->initial_pairs, context->initial_number);
     break;
 
+  case MIX_TEST:
+    execute_mix(context->memc, context->initial_pairs, context->initial_number, context->execute_number, context->write_percentage);
+    break;
+  
   case MGET_TEST:
     execute_mget(context->memc, (const char*const*)context->keys, context->key_lengths, context->initial_number);
     break;
@@ -466,6 +474,10 @@ void options_parse(int argc, char *argv[])
       {
         opt_test= MGET_TEST;
       }
+      else if (strcmp(optarg, "mix") == 0)
+      {
+        opt_test= MIX_TEST;
+      }
       else
       {
         fprintf(stderr, "Your test, %s, is not a known test\n", optarg);
@@ -529,7 +541,7 @@ void options_parse(int argc, char *argv[])
     exit(EXIT_SUCCESS);
   }
 
-  if ((opt_test == GET_TEST or opt_test == MGET_TEST) and opt_createial_load == 0)
+  if ((opt_test == GET_TEST || opt_test == MGET_TEST || opt_test == MIX_TEST) && opt_createial_load == 0)
     opt_createial_load= DEFAULT_INITIAL_LOAD;
 
   if (opt_execute_number == 0)

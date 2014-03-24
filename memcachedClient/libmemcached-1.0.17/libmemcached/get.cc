@@ -277,7 +277,7 @@ static memcached_return_t __mget_by_key_real(memcached_st *ptr,
 
   if (ptr->flags.support_cas)
   {
-    get_command= "gets";
+    get_command= (char*)"gets";
     get_command_length= 4;
   }
 

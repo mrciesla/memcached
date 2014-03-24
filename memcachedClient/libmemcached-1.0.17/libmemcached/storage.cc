@@ -38,6 +38,8 @@
 
 #include <libmemcached/common.h>
 
+
+
 enum memcached_storage_action_t {
   SET_OP,
   REPLACE_OP,
@@ -433,12 +435,15 @@ memcached_return_t memcached_set(memcached_st *ptr, const char *key, size_t key_
                                  time_t expiration,
                                  uint32_t flags)
 {
+    static int id = 0;
   memcached_return_t rc;
+  
   LIBMEMCACHED_MEMCACHED_SET_START();
   rc= memcached_send(ptr, key, key_length,
                      key, key_length, value, value_length,
                      expiration, flags, 0, SET_OP);
   LIBMEMCACHED_MEMCACHED_SET_END();
+  id++;
   return rc;
 }
 

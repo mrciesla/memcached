@@ -18,6 +18,38 @@
 #include <mem_config.h>
 #include "clients/execute.h"
 
+using namespace std;
+static bool myPairs = false;
+map<unsigned int, timeval> *inFlightG;
+//Time in microseconds
+map< long, long > *doneG;
+map<unsigned int, timeval> *inFlightS;
+map< long, long > *doneS;
+
+void START(int id, map<unsigned int, timeval> *inFlight){
+    struct timeval t1;
+    gettimeofday(&t1, NULL);
+    (*inFlight)[id] = t1;
+}
+
+void END(unsigned int id, map<unsigned int, timeval> *inFlight, map<long, long> *done){
+
+    struct timeval end;
+    gettimeofday(&end, NULL);
+    struct timeval start = (*inFlight)[id];
+    inFlight->erase(inFlight->find(id)); 
+    long mtime, seconds, useconds;
+    seconds  = end.tv_sec  - start.tv_sec;
+    useconds = end.tv_usec - start.tv_usec;
+    mtime = ((seconds) * 1000000 + useconds) ;
+
+    if(done->count(mtime) > 0){
+        (*done)[mtime] = (*done)[mtime] + 1;
+    }else{
+        (*done)[mtime] = 1;
+    }
+
+}
 unsigned int execute_set(memcached_st *memc, pairs_st *pairs, unsigned int number_of)
 {
   unsigned int x;
@@ -46,6 +78,176 @@ unsigned int execute_set(memcached_st *memc, pairs_st *pairs, unsigned int numbe
 
   return pairs_sent;
 }
+/*
+  Execute a mix of operations on a set of pairs.
+  Return the number of rows retrieved.
+*/
+
+void do_get(unsigned int &retrieved, unsigned int number_of, memcached_st *memc, pairs_st *pairs){
+    size_t value_length;
+    uint32_t flags;
+    static unsigned int id = 0;
+
+    START(id, inFlightG);
+    unsigned int fetch_key= (unsigned int)((unsigned int)random() % number_of);
+
+    memcached_return_t rc;
+    char *value= memcached_get(memc, pairs[fetch_key].key, pairs[fetch_key].key_length,
+                               &value_length, &flags, &rc);
+
+    if (memcached_failed(rc))
+    {
+      fprintf(stderr, "%s:%d Failure on read(%s) of %.*s\n",
+              __FILE__, __LINE__,
+              memcached_last_error_message(memc),
+              (unsigned int)pairs[fetch_key].key_length, pairs[fetch_key].key);
+    }
+    else
+    {
+      retrieved++;
+    }
+
+    ::free(value);
+
+    END(id, inFlightG, doneG);
+}
+
+
+void do_set_new(unsigned int &pairs_sent, unsigned int &number_of, memcached_st *memc, pairs_st *pairs){
+
+    //Make the new pair
+    static int id = 0;
+    START(id, inFlightS);
+    int x = number_of;
+    unsigned int value_length = 400;
+    pairs[x].key= (char *)calloc(100, sizeof(char));
+
+    if (pairs[x].key == NULL){
+      fprintf(stderr, "%s:%d Failure on insert \n",__FILE__, __LINE__);
+    }
+
+    get_random_string(pairs[x].key, 100);
+    pairs[x].key_length= 100;
+
+    if (value_length)
+    {
+      pairs[x].value= (char *)calloc(value_length, sizeof(char));
+
+      if (pairs[x].value == NULL)
+        fprintf(stderr, "%s:%d Failure on insert \n",__FILE__, __LINE__);
+
+      get_random_string(pairs[x].value, value_length);
+      pairs[x].value_length= value_length;
+    }
+    else
+    {
+      pairs[x].value= NULL;
+      pairs[x].value_length= 0;
+    }
+    number_of++;
+    //send the new key
+    memcached_return_t rc= memcached_set(memc, pairs[x].key, pairs[x].key_length,
+                                         pairs[x].value, pairs[x].value_length,
+                                         0, 0);
+    if (memcached_failed(rc))
+    {
+      fprintf(stderr, "%s:%d Failure on insert (%s) of %.*s\n",
+              __FILE__, __LINE__,
+              memcached_last_error_message(memc),
+              (unsigned int)pairs[x].key_length, pairs[x].key);
+      
+      // We will try to reconnect and see if that fixes the issue
+      memcached_quit(memc);
+    }
+    else
+    {
+      pairs_sent++;
+    }
+
+    END(id++, inFlightS, doneS);
+
+}
+
+void free_old(pairs_st *pairs){
+  if (pairs == NULL)
+  {
+    return;
+  }
+
+  /* We free until we hit the null pair we stores during creation */
+  for (uint32_t x= 0; pairs[x].key; x++)
+  {
+    free(pairs[x].key);
+    if (pairs[x].value)
+    {
+      free(pairs[x].value);
+    }
+  }
+
+  delete []pairs;
+}
+
+pairs_st *increase_pairs(pairs_st *pairs, unsigned int &size){
+  pairs_st *newPairs = new pairs_st[size*2]; 
+  for(unsigned int i =0; i < size; i++){
+      newPairs[i].copy_from(&pairs[i]);
+  }
+  //free old
+  if(myPairs){
+      free_old(pairs);
+  }
+  size = size*2;
+  myPairs = true;
+  return newPairs;
+}
+
+void postProcess(map<long, long> *done){
+    printf("Post process %ld\n", done->size());
+}
+
+
+unsigned int execute_mix(memcached_st *memc, pairs_st *pairs, unsigned int number_of, unsigned int num_ops, unsigned int write_percentage)
+{
+  unsigned int x;
+  unsigned int retrieved =0;
+  unsigned int pairs_sent =0;
+
+  unsigned int size_of_pairs = number_of;
+
+  inFlightG = new map<unsigned int, timeval>();
+  doneG = new map<long, long>();
+
+  inFlightS = new map<unsigned int, timeval>();
+  doneS = new map<long, long>();
+  
+  num_ops = num_ops == 0 ? 1000:num_ops;
+
+  printf("Doing mix\n");
+  //Create a copy of pairs that is 2x in order to have room for new sets
+  pairs = increase_pairs(pairs, size_of_pairs);
+
+  for (retrieved= 0,x= 0; x < num_ops; x++)
+  {
+    unsigned int prob= (unsigned int)((unsigned int)random() % 100);
+
+    if(prob > write_percentage){
+        do_get(retrieved, number_of, memc, pairs);
+    }else{
+        if(number_of >= size_of_pairs -1){
+            increase_pairs(pairs, size_of_pairs);
+        }
+        do_set_new(pairs_sent, number_of, memc, pairs);
+    }
+  }
+  
+    postProcess(doneS);
+    postProcess(doneG);
+  if(myPairs){
+      free_old(pairs);
+  }
+  return retrieved;
+}
+
 
 /*
   Execute a memcached_get() on a set of pairs.
