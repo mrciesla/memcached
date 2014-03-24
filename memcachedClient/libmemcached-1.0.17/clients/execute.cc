@@ -189,7 +189,8 @@ void free_old(pairs_st *pairs){
 }
 
 pairs_st *increase_pairs(pairs_st *pairs, unsigned int &size){
-  pairs_st *newPairs = new pairs_st[size*2]; 
+    printf("Increasing pair size\n");
+  pairs_st *newPairs = new pairs_st[size*2+1]; 
   for(unsigned int i =0; i < size; i++){
       newPairs[i].copy_from(&pairs[i]);
   }
@@ -230,20 +231,22 @@ unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int numbe
   printf("Doing mix\n");
   //Create a copy of pairs that is 2x in order to have room for new sets
   pairs = increase_pairs(pairs, size_of_pairs);
-
-  for (retrieved= 0,x= 0; x < num_ops; x++)
-  {
+  
+  struct timeval t1, t2;
+  gettimeofday(&t1, NULL);
+  do{
     unsigned int prob= (unsigned int)((unsigned int)random() % 100);
 
     if(prob > write_percentage){
         do_get(retrieved, number_of, memc, pairs);
     }else{
         if(number_of >= size_of_pairs -1){
-            increase_pairs(pairs, size_of_pairs);
+            pairs = increase_pairs(pairs, size_of_pairs);
         }
         do_set_new(pairs_sent, number_of, memc, pairs);
     }
-  }
+    gettimeofday(&t2, NULL);
+  }while((t2.tv_sec  - t1.tv_sec) < 600);
   
     postProcess(doneS);
     postProcess(doneG);
