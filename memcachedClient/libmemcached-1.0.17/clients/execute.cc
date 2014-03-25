@@ -203,7 +203,7 @@ pairs_st *increase_pairs(pairs_st *pairs, unsigned int &size){
   return newPairs;
 }
 
-void postProcess(map<long, long> *done){
+void postProcess(map<long, long> *done, char *prefix){
     printf("Post process %ld\n", done->size());
     map<long, long>::iterator start = done->begin();
     map<long, long>::iterator end = done->end();
@@ -228,7 +228,7 @@ void postProcess(map<long, long> *done){
     }
     for(long i =0; i <= max; i++){
         if(values[i] != 0){
-            printf("%ld,%ld\n", i, values[i]);
+            printf("%s,%ld,%ld\n", prefix, i, values[i]);
         }
     }
 
@@ -275,10 +275,8 @@ unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int numbe
     }
     gettimeofday(&t2, NULL);
   }while((t2.tv_sec  - t1.tv_sec) < 600);
-    printf("Set times\n");  
-    postProcess(doneS);
-    printf("Get times\n");  
-    postProcess(doneG);
+    postProcess(doneS, "Set");
+    postProcess(doneG, "Get");
   if(myPairs){
       free_old(pairs);
   }
