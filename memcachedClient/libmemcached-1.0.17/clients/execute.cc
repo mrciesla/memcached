@@ -205,12 +205,40 @@ pairs_st *increase_pairs(pairs_st *pairs, unsigned int &size){
 
 void postProcess(map<long, long> *done){
     printf("Post process %ld\n", done->size());
+    map<long, long>::iterator start = done->begin();
+    map<long, long>::iterator end = done->end();
+    long max =0;
+    //Find max
+    while(start!=end){
+        if(start->first > max){
+            max = start->first;
+        }
+        start++;
+    }
+    //Bucket sort!
+    long *values = new long[max + 1];
+    for(long i =0; i <=max; i++){
+        values[i] = 0;
+    }
+    
+    start = done->begin();
+    while(start!=end){
+        values[start->first] = start->second;
+        start++;
+    }
+    for(long i =0; i <= max; i++){
+        if(values[i] != 0){
+            printf("%ld,%ld\n", i, values[i]);
+        }
+    }
+
+    delete []values;
+
 }
 
 
 unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int number_of, unsigned int num_ops, unsigned int write_percentage)
 {
-  unsigned int x;
   unsigned int retrieved =0;
   unsigned int pairs_sent =0;
 
@@ -247,8 +275,9 @@ unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int numbe
     }
     gettimeofday(&t2, NULL);
   }while((t2.tv_sec  - t1.tv_sec) < 600);
-  
+    printf("Set times\n");  
     postProcess(doneS);
+    printf("Get times\n");  
     postProcess(doneG);
   if(myPairs){
       free_old(pairs);
