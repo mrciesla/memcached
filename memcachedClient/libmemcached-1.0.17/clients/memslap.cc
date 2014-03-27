@@ -159,6 +159,8 @@ static unsigned int opt_concurrency= 0;
 static int opt_displayflag= 0;
 static char *opt_servers= NULL;
 static bool opt_udp_io= false;
+static int startMemcached = false;
+static int pinMemcached = false;
 test_t opt_test= SET_TEST;
 
 extern "C" {
@@ -203,8 +205,53 @@ static __attribute__((noreturn)) void *run_task(void *p)
 }
 
 }
+/*
+int getSocket(char *server, int port){
+    struct sockaddr_in serv_addr; 
+    int sockfd = 0, n = 0;
+    char recvBuff[1024];
+    
+    memset(recvBuff, '0',sizeof(recvBuff));
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        printf("\n Error : Could not create socket \n");
+    } 
+    int optval = 1;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(int)) < 0){
+        printf("Cannot set TCP_NODELAY option on listen socket (%s)\n", strerror(errno));
+    }
 
+    memset(&serv_addr, '0', sizeof(serv_addr)); 
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port); 
+    
+    if(inet_pton(AF_INET, server, &serv_addr.sin_addr)<=0){
+        printf("\n inet_pton error occured\n");
+    } 
+    
+    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
+        printf("\n Error : Connect Failed \n");
+    }
+    return sockfd;
+}
 
+void sendCommand(char *server, int port, char *command){
+    int sockfd = 0, n = 0;
+    char recvBuff[1024];
+    printf("Sending %s to %s:%d \n", command, server, port);
+    sockfd = getSocket(server, port); 
+    
+    write(sockfd, command, strlen(command));  
+    if( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0){
+        recvBuff[n] = 0;
+    } 
+    if(n < 0 || strcmp(recvBuff, "success") != 0 ){
+        printf("\n Error : with remote op %s\n", recvBuff);
+    }
+    close(sockfd);
+    
+}
+*/
 int main(int argc, char *argv[])
 {
   conclusions_st conclusion;
@@ -404,6 +451,8 @@ void options_parse(int argc, char *argv[])
       {(OPTIONSTRING)"version", no_argument, NULL, OPT_VERSION},
       {(OPTIONSTRING)"binary", no_argument, NULL, OPT_BINARY},
       {(OPTIONSTRING)"udp", no_argument, NULL, OPT_UDP},
+      {"setupMemcached", no_argument,  &startMemcached, 1},
+      {"pinMemcached", no_argument, &pinMemcached, 1},
       {0, 0, 0, 0},
     };
 
@@ -529,6 +578,31 @@ void options_parse(int argc, char *argv[])
     }
   }
 
+  if(startMemcached == 1){
+    printf("Starting memcached\n");
+    if(sendCommand("141.212.106.235", 5000, "reset\n\r") == false){
+        printf("couldn't setup memcached \n");
+        exit(1);
+    }
+
+  }else{
+      int maxTries =60;
+      bool running = false;
+      printf("Seeing if memcached is running\n");
+      while(maxTries-- && !running){
+        running = sendCommand("141.212.106.235", 5000, "running\n\r");
+        usleep(1000000);
+      }
+      if(!running){
+          printf("memcached is not running \n");
+          exit(1);
+      }
+    
+  }
+  if(pinMemcached == 1){
+    printf("pinning memcached\n");
+    sendCommand("141.212.106.235", 5000, "pinMemcached\n\r");
+  }
   if (opt_version)
   {
     version_command(PROGRAM_NAME);

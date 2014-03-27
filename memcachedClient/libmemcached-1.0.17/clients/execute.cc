@@ -236,6 +236,53 @@ void postProcess(map<long, long> *done, char *prefix){
 
 }
 
+int getSocket(char *server, int port){
+    struct sockaddr_in serv_addr; 
+    int sockfd = 0, n = 0;
+    char recvBuff[1024];
+    
+    memset(recvBuff, '0',sizeof(recvBuff));
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        printf("\n Error : Could not create socket \n");
+    } 
+    int optval = 1;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(int)) < 0){
+        printf("Cannot set TCP_NODELAY option on listen socket (%s)\n", strerror(errno));
+    }
+
+    memset(&serv_addr, '0', sizeof(serv_addr)); 
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port); 
+    
+    if(inet_pton(AF_INET, server, &serv_addr.sin_addr)<=0){
+        printf("\n inet_pton error occured\n");
+    } 
+    
+    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0){
+        printf("\n Error : Connect Failed \n");
+    }
+    return sockfd;
+}
+
+bool sendCommand(char *server, int port, char *command){
+    int sockfd = 0, n = 0;
+    char recvBuff[1024];
+    bool ret = true;
+    printf("Sending %s to %s:%d \n", command, server, port);
+    sockfd = getSocket(server, port); 
+    
+    write(sockfd, command, strlen(command));  
+    if( (n = read(sockfd, recvBuff, sizeof(recvBuff)-1)) > 0){
+        recvBuff[n] = 0;
+    } 
+    if(n < 0 || strcmp(recvBuff, "success") != 0 ){
+        printf("\n Error : with remote op %s\n", recvBuff);
+        ret = false;
+    }
+    close(sockfd);
+    return ret;
+}
 
 unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int number_of, unsigned int num_ops, unsigned int write_percentage)
 {
@@ -243,7 +290,9 @@ unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int numbe
   unsigned int pairs_sent =0;
 
   unsigned int size_of_pairs = number_of;
-  
+  char *coordinatorAddr = "141.212.106.235"; 
+  int coordinatorPort = 5000;
+  sendCommand(coordinatorAddr, coordinatorPort, "start\n\r");
   //reset_stats( memr, NULL, 0);
   //After a reset the connection is bonkers so basically create a new one
   memcached_st *memc= memcached_clone(NULL, memr);
@@ -286,6 +335,7 @@ unsigned int execute_mix(memcached_st *memr, pairs_st *pairs, unsigned int numbe
   printf("Set %s\n", memcached_stat_get_value(memc, memc_stat,"cmd_set", NULL));
 
   memcached_free(memc);
+  sendCommand(coordinatorAddr, coordinatorPort, "start\n\r");
   return retrieved;
 }
 

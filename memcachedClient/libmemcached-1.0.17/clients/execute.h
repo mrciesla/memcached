@@ -40,6 +40,9 @@ unsigned int execute_mget(memcached_st *memr, const char * const *keys, size_t *
                           unsigned int number_of);
 unsigned int execute_mix(memcached_st *memc, pairs_st *pairs, unsigned int number_of,
         unsigned int num_ops, unsigned int write_percentage);
+
+int getSocket(char *server, int port);
+bool sendCommand(char *server, int port, char *command);
 #ifdef __cplusplus
 } // extern "C"
 #endif
