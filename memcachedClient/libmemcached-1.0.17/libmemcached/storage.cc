@@ -260,8 +260,6 @@ static memcached_return_t memcached_send_ascii(Memcached *ptr,
                                                const bool reply,
                                                const memcached_storage_action_t verb)
 {
-  static int rid = 10 + getpid();
-  rid++;
   char flags_buffer[MEMCACHED_MAXIMUM_INTEGER_DISPLAY_LENGTH +1];
   int flags_buffer_length= snprintf(flags_buffer, sizeof(flags_buffer), " %u", flags);
   if (size_t(flags_buffer_length) >= sizeof(flags_buffer) or flags_buffer_length < 0)
@@ -271,7 +269,7 @@ static memcached_return_t memcached_send_ascii(Memcached *ptr,
   }
 
   char expiration_buffer[MEMCACHED_MAXIMUM_INTEGER_DISPLAY_LENGTH +1];
-  int expiration_buffer_length= snprintf(expiration_buffer, sizeof(expiration_buffer), " %d", rid);
+  int expiration_buffer_length= snprintf(expiration_buffer, sizeof(expiration_buffer), " %d", expiration);
   if (size_t(expiration_buffer_length) >= sizeof(expiration_buffer) or expiration_buffer_length < 0)
   {
     return memcached_set_error(*instance, MEMCACHED_MEMORY_ALLOCATION_FAILURE, MEMCACHED_AT, 
@@ -366,6 +364,8 @@ static inline memcached_return_t memcached_send(memcached_st *shell,
 {
   Memcached* ptr= memcached2Memcached(shell);
   memcached_return_t rc;
+  static int rid = 10 + getpid();
+  rid++;
   if (memcached_failed(rc= initialize_query(ptr, true)))
   {
     return rc;
@@ -413,14 +413,14 @@ static inline memcached_return_t memcached_send(memcached_st *shell,
   {
     rc= memcached_send_binary(ptr, instance, server_key,
                               key, key_length,
-                              value, value_length, expiration,
+                              value, value_length, rid,
                               flags, cas, flush, reply, verb);
   }
   else
   {
     rc= memcached_send_ascii(ptr, instance,
                              key, key_length,
-                             value, value_length, expiration,
+                             value, value_length, rid,
                              flags, cas, flush, reply, verb);
   }
 

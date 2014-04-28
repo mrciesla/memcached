@@ -586,7 +586,7 @@ void options_parse(int argc, char *argv[])
     }
 
   }else{
-      int maxTries =60;
+      /*int maxTries =60;
       bool running = false;
       printf("Seeing if memcached is running\n");
       while(maxTries-- && !running){
@@ -597,6 +597,7 @@ void options_parse(int argc, char *argv[])
           printf("memcached is not running \n");
           exit(1);
       }
+      */
     
   }
   if(pinMemcached == 1){

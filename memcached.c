@@ -140,6 +140,19 @@ static void maxconns_handler(const int fd, const short which, void *arg) {
     }
 }
 
+
+bool insertError(void){
+    time_t now;
+    time(&now);
+    double diff = difftime(now, settings.memcached_start_time);
+
+    bool error = settings.error_enabled && (diff > settings.error_start) ? 
+        (rand()%100) < settings.error_prob :
+        false;
+    return error;
+    
+}
+
 #define REALTIME_MAXDELTA 60*60*24*30
 
 /*
@@ -231,6 +244,10 @@ static void settings_init(void) {
     settings.shutdown_command = false;
     settings.tail_repair_time = TAIL_REPAIR_TIME_DEFAULT;
     settings.flush_enabled = true;
+    settings.error_enabled = false;
+    settings.error_prob = 0;
+    settings.error_type = 'n';
+
 }
 
 /*
@@ -2747,6 +2764,49 @@ static void process_stat(conn *c, token_t *tokens, const size_t ntokens) {
     }
 }
 
+char *dumData;
+int sizeOfDumData;
+void doGetError(conn *c){
+    //int i =0;
+    switch(settings.error_type){
+        case 'l':
+            fprintf(stderr,"Doing sleep error\n");
+            sleep(2);//ms sleep
+            fprintf(stderr,"Done sleep error\n");
+            break;
+       case 'd':{
+            /*
+            printf("------------Begin---------------\n");
+            printf("C->wbuf %s C->wcurr %s wsize %d wbytes %d\n", c->wbuf, c->wcurr, c->wsize, c->wbytes);
+            printf("C->iov %p C->iovsize %d iovused %d \n",(void*) c->iov, c->iovsize, c->iovused);
+            printf("C->msghdr %p C->msgsize %d msgused %d msgcurr %d msgbytes %d \n",(void*) c->msglist, c->msgsize, c->msgused, c->msgcurr, c->msgbytes);
+            printf("C->ilist %p C->isize %d icurr %p ileft %d \n",(void*) c->ilist, c->isize, (void *) c->icurr, c->ileft);
+            printf("C->ritem %s C->rsize %d \n", c->ritem, c->rlbytes);
+            printf("Print iov\n");
+            */
+            if(dumData == NULL){
+                sizeOfDumData = 100; 
+                dumData = (char *) malloc(sizeOfDumData);
+            }
+            memset(dumData, 0x00, sizeOfDumData);
+            int tmpSize = rand()%99;
+            strncpy(dumData, "THISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRING", tmpSize);
+            c->iov[2].iov_base = (void*)dumData;
+            c->iov[2].iov_len = tmpSize;
+            /*
+            for(i =0; i< c->iovused; i++){
+                printf("iov: %d iov_base %s iov_len %ld \n:", i, (char*)c->iov[i].iov_base, c->iov[i].iov_len);
+            }
+
+            printf("-------------END----------------\n");
+            */
+            break;
+                }
+        case 'c':
+            break;
+    }
+}
+
 /* ntokens is overwritten here... shrug.. */
 static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens, bool return_cas) {
     char *key;
@@ -2759,10 +2819,11 @@ static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens,
 
     do {
         while(key_token->length != 0) {
-
+            if(strncmp("RID:", key_token->value,4) == 0){
+                key_token++;
+            }
             key = key_token->value;
             nkey = key_token->length;
-
             if(nkey > KEY_MAX_LENGTH) {
                 out_string(c, "CLIENT_ERROR bad command line format");
                 while (i-- > 0) {
@@ -2932,8 +2993,14 @@ static inline void process_get_command(conn *c, token_t *tokens, size_t ntokens,
         out_of_memory(c, "SERVER_ERROR out of memory writing get response");
     }
     else {
-        conn_set_state(c, conn_mwrite);
-        c->msgcurr = 0;
+        if(insertError()){
+            doGetError(c);
+            conn_set_state(c, conn_mwrite);
+            c->msgcurr = 0;
+        }else{
+            conn_set_state(c, conn_mwrite);
+            c->msgcurr = 0;
+        }
     }
 }
 
@@ -3021,12 +3088,18 @@ static void process_update_command(conn *c, token_t *tokens, const size_t ntoken
         return;
     }
     ITEM_set_cas(it, req_cas_id);
-
+     
     c->item = it;
     c->ritem = ITEM_data(it);
     c->rlbytes = it->nbytes;
     c->cmd = comm;
-    conn_set_state(c, conn_nread);
+    if(insertError()){
+        //doUpdateError();    
+        //doGetError(c);    
+        conn_set_state(c, conn_nread);
+    }else{
+        conn_set_state(c, conn_nread);
+    }
 }
 
 static void process_touch_command(conn *c, token_t *tokens, const size_t ntokens) {
@@ -4932,8 +5005,25 @@ int main (int argc, char **argv) {
           "S"   /* Sasl ON */
           "F"   /* Disable flush_all */
           "o:"  /* Extended generic options */
+          "e:"  /* Error type */
+          "E"  /* Error enabled */
+          "G:"  /* Error prob */
+          "g:"  /* Error delay */
         ))) {
         switch (c) {
+        case 'E': 
+            settings.error_enabled = true;
+            break;
+        case 'e': 
+            settings.error_type = optarg[0];
+            break;
+        case 'G': 
+            settings.error_prob = atoi(optarg);
+            break;
+        case 'g': 
+            time(&settings.memcached_start_time);
+            settings.error_start = atoi(optarg);
+            break;
         case 'A':
             /* enables "shutdown" command */
             settings.shutdown_command = true;

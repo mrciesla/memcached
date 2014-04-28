@@ -269,7 +269,7 @@ bool sendCommand(char *server, int port, char *command){
     int sockfd = 0, n = 0;
     char recvBuff[1024];
     bool ret = true;
-    printf("Sending %s to %s:%d \n", command, server, port);
+    /*printf("Sending %s to %s:%d \n", command, server, port);
     sockfd = getSocket(server, port); 
     
     write(sockfd, command, strlen(command));  
@@ -281,6 +281,7 @@ bool sendCommand(char *server, int port, char *command){
         ret = false;
     }
     close(sockfd);
+    */
     return ret;
 }
 

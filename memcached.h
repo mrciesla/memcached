@@ -312,6 +312,11 @@ struct settings {
     bool shutdown_command; /* allow shutdown command */
     int tail_repair_time;   /* LRU tail refcount leak repair time */
     bool flush_enabled;     /* flush_all enabled */
+    char error_type;        /* Errors that a server could have */
+    int error_prob;         /* Probablity of having an error for a request */
+    int error_start;         /* Delay in seconds before errors will occur */
+    time_t memcached_start_time;         /* start time of memcached */
+    bool error_enabled;     /* Enable errors */
 };
 
 extern struct stats stats;
@@ -545,6 +550,9 @@ void  item_stats_totals(ADD_STAT add_stats, void *c);
 void  item_stats_sizes(ADD_STAT add_stats, void *c);
 void  item_unlink(item *it);
 void  item_update(item *it);
+bool  insertError(void); 
+void  doGetError(conn *c);
+void  doSetError(conn *c);
 
 void item_lock_global(void);
 void item_unlock_global(void);
