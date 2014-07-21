@@ -2804,7 +2804,8 @@ void doGetError(conn *c){
                 }
         case 'c':{
                 //Write ' ' and then swallow TODO: Check if swallow is right
-            write_bin_error(c, PROTOCOL_BINARY_RESPONSE_ENOMEM, ' ', 1);
+            char *tmp = " ";
+            write_bin_error(c, PROTOCOL_BINARY_RESPONSE_ENOMEM, tmp, 1);
             break;
                  }
     }
