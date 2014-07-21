@@ -58,6 +58,8 @@
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #endif
 
+#define HAVE_MEMCACHED_BINARY 0
+#define MEMCACHED_BINARY ""
 namespace libtest {
 
 class Memcached : public libtest::Server

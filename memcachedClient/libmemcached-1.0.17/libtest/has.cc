@@ -39,7 +39,8 @@
 
 #include <cstdlib>
 #include <unistd.h>
-#define HAVE_MEMCACHED_BINARY 1
+#define HAVE_MEMCACHED_BINARY 0
+#define MEMCACHED_BINARY ""
 
 namespace libtest {
 

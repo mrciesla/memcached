@@ -46,6 +46,7 @@
 #include <functional> 
 #include <locale>
 
+#define HAVE_MEMCACHED_BINARY 0
 // trim from end 
 static inline std::string &rtrim(std::string &s)
 { 
