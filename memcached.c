@@ -2764,7 +2764,7 @@ static void process_stat(conn *c, token_t *tokens, const size_t ntokens) {
     }
 }
 
-char *dumData;
+// char *dumData;
 int sizeOfDumData;
 void doGetError(conn *c){
     //int i =0;
@@ -2774,7 +2774,7 @@ void doGetError(conn *c){
             sleep(2);//ms sleep
             fprintf(stderr,"Done sleep error\n");
             break;
-       case 'd':{
+				case 'd':{
             /*
             printf("------------Begin---------------\n");
             printf("C->wbuf %s C->wcurr %s wsize %d wbytes %d\n", c->wbuf, c->wcurr, c->wsize, c->wbytes);
@@ -2784,22 +2784,15 @@ void doGetError(conn *c){
             printf("C->ritem %s C->rsize %d \n", c->ritem, c->rlbytes);
             printf("Print iov\n");
             */
-            if(dumData == NULL){
-                sizeOfDumData = 100; 
-                dumData = (char *) malloc(sizeOfDumData);
-            }
-            memset(dumData, 0x00, sizeOfDumData);
-            int tmpSize = rand()%99;
-            strncpy(dumData, "THISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRING", tmpSize);
-            c->iov[2].iov_base = (void*)dumData;
-            c->iov[2].iov_len = tmpSize;
-            /*
+						strncpy(((char *) c->iov[2].iov_base) + 15, "THISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRING", tmpSize); // offset to preserve flags and size fields
+            // c->iov[2].iov_len = tmpSize;											// not quite right, breaks memslap
+            
             for(i =0; i< c->iovused; i++){
                 printf("iov: %d iov_base %s iov_len %ld \n:", i, (char*)c->iov[i].iov_base, c->iov[i].iov_len);
             }
 
             printf("-------------END----------------\n");
-            */
+            
             break;
                 }
         case 'c':{
