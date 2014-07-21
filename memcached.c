@@ -2764,7 +2764,7 @@ static void process_stat(conn *c, token_t *tokens, const size_t ntokens) {
     }
 }
 
-// char *dumData;
+char *dumData;
 int sizeOfDumData;
 void doGetError(conn *c){
     //int i =0;
@@ -2784,14 +2784,17 @@ void doGetError(conn *c){
             printf("C->ritem %s C->rsize %d \n", c->ritem, c->rlbytes);
             printf("Print iov\n");
             */
+            int tmpSize = rand()%49;
 						strncpy(((char *) c->iov[2].iov_base) + 15, "THISISAWRONGDATASTRINGTHISISAWRONGDATASTRINGTHISISAWRONGDATASTRING", tmpSize); // offset to preserve flags and size fields
             // c->iov[2].iov_len = tmpSize;											// not quite right, breaks memslap
             
+						/*
             for(i =0; i< c->iovused; i++){
                 printf("iov: %d iov_base %s iov_len %ld \n:", i, (char*)c->iov[i].iov_base, c->iov[i].iov_len);
             }
 
             printf("-------------END----------------\n");
+						*/
             
             break;
                 }
