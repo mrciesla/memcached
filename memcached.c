@@ -2799,9 +2799,7 @@ void doGetError(conn *c){
             break;
                 }
         case 'c':{
-                //Write ' ' and then swallow TODO: Check if swallow is right
-            char *tmp = " ";
-            write_bin_error(c, PROTOCOL_BINARY_RESPONSE_ENOMEM, tmp, 1);
+            c->state = conn_closing;
             break;
                  }
     }
